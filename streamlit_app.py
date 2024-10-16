@@ -1,5 +1,19 @@
 import streamlit as st
 from openai import OpenAI
+import os
+
+# Function to load ingredients from a file.
+def load_ingredients():
+    if os.path.exists("ingredients.txt"):
+        with open("ingredients.txt", "r") as f:
+            return [line.strip() for line in f.readlines()]
+    return []
+
+# Function to save ingredients to a file.
+def save_ingredients():
+    with open("ingredients.txt", "w") as f:
+        for ingredient in st.session_state.ingredients:
+            f.write(f"{ingredient}\n")
 
 # Set up the title and description.
 st.title("🍜 Cooking Assistant")
@@ -18,7 +32,7 @@ client = OpenAI(api_key=openai_api_key)
 
 # Initialize session state for storing ingredients and selected dishes.
 if "ingredients" not in st.session_state:
-    st.session_state.ingredients = []
+    st.session_state.ingredients = load_ingredients()
 
 if "selected_dish" not in st.session_state:
     st.session_state.selected_dish = None
@@ -29,6 +43,7 @@ new_ingredient = st.text_input("Enter an ingredient:")
 if st.button("Add Ingredient"):
     if new_ingredient and new_ingredient not in st.session_state.ingredients:
         st.session_state.ingredients.append(new_ingredient)
+        save_ingredients()  # Save ingredients to the file
         st.success(f"Added {new_ingredient} to your list of ingredients.")
     elif new_ingredient in st.session_state.ingredients:
         st.warning(f"{new_ingredient} is already in your list.")
@@ -50,7 +65,7 @@ if cuisine_preference and st.button("Get Cooking Options"):
     prompt = (
         f"I have the following ingredients: {', '.join(st.session_state.ingredients)}. "
         f"I would like to cook something in {cuisine_preference}. "
-        "What are some possible dishes I can make?"
+        "What are some possible dishes I can make? Only write names of the dishes."
     )
 
     # Generate a list of possible dishes.
